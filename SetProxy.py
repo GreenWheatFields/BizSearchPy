@@ -26,3 +26,4 @@ def renew_connection():
         # would like to log the location as well as the ip, or just create at log for data analysis
         # speeds request per minute etc.
         # time between switching, etc
+        # perhaps to increase speed, look into opening multiple instances
