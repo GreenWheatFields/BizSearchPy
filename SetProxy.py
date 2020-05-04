@@ -1,5 +1,6 @@
 import requests
 import Keys
+import json
 from stem import Signal
 from stem.control import Controller
 
@@ -11,7 +12,14 @@ def get_tor_session(count):
                        'https': Keys.tor_proxy()}
     if count == 1:
         print("Connected to TOR proxy")
-        print(session.get("http://httpbin.org/ip").text)
+        print("Getting IP")
+        ip = json.loads(session.get("http://httpbin.org/ip").text)
+        print(ip["origin"])
+        print("Getting location")
+        location_url = "https://ipapi.co/" + ip["origin"] + "/json/"
+        location = json.loads(requests.get(location_url).text)
+        print(location_url)
+        print(location["country"])
     return session
 
 
