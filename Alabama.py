@@ -11,71 +11,49 @@ import SetProxy
 
 dateTest = "06/02/01"
 
-nextBiz = 18554
+nextBiz = 0
 
 baseURL = "http://arc-sos.state.al.us/cgi/corpdetail.mbr/detail?page=number&num1="
 totalScraped = 0
 formatted = ""
 proxyCount = 0
 count = 0
+global start
+start = time.time() / 60
+totalCount = 0
+print(nextBiz)
 
-
-class Alabama:
-    print(nextBiz)
 
 def find_foreign_company(desc, value, name):
-    for i, j in zip(desc,value):
-        if "Entity Type" in i.text.replace("\n", "").strip():
-            if "Foreign" in j.text.replace("\n", "").strip():
-                f2 = open("Alabama.csv", "a")
-                f2.write(url + ", US, AL, " + '"' + name[0].text + '"' + ",")
-                #totalScraped += 1 replcae with global count variable
-                print("foregin company")
-                for k  in desc:
-                    if "Origin" in k.text:
-                        f2.write(value[0].text.strip() + ',' + value[2].text.strip() + ',')
-                        if "Corporation" in k.text:
-                            f2.write("Corporation,")
-                        elif "Limited":
-                            f2.wrote("LLC,")
-                        f2.write(value[5].text + ",")
-                        #definetely going to have so seperate the parse method into multiple methods for my own sanity
-                        f2.close()
-                        parse()
-
-                # if "Origin" in i.text.replace("\n", "").strip():
-                #     f2.write(value[0].text + ",\n")
-                #     print("test")
-                #     parse()
-                # else:
-                #     print("test2")
-                #     parse()
-
-                #f2.close()
-                # perhaps find wheter or not an attribute name == "Name at place of oriigin" if so set x = 1. if x = 0 you know where to start, same with x e 1:
-                #parse()
+    for i in value:
+        for j in desc:
+            if "Foreign" in i.text and "Legal Name in Place of Origin" in j.text:
+                print("origin includeds")
+                value.pop(1)
+                #im not sure if one is consitently to location, it could be a bug in the future
+                return value
 
 
 def parse():
     # will need to catch or identify indexError
 
+
     f = open("Alabama.csv", "a")
 
-
-    global nextBiz, totalScraped, count,url
+    global nextBiz, totalScraped, count, start, totalCount
     nextBiz += 1
     totalScraped += 1
     count += 1
+    if totalCount >= 950000:
+        kill_switch()
+
     if totalScraped >= 65:
         SetProxy.renew_connection()
         totalScraped = 0
 
-    #nextBiz = 6#random.randrange(400000)
-    url = baseURL + str(nextBiz).zfill(
-        6)
+    url = baseURL + str(nextBiz).zfill(6)
     print(url)
-
-    session = SetProxy.get_tor_session(count)
+    session = SetProxy.get_tor_session()
 
     r = session.get(url)
     #r = requests.get(url)
@@ -103,16 +81,6 @@ def parse():
     desc = doc.find_all("td", class_="aiSosDetailDesc")
     value = doc.find_all("td", class_="aiSosDetailValue")
     name = doc.find_all("td", class_="aiSosDetailHead")
-    for i, j in zip(desc, value):
-        # print(i.text, end=" ")
-        # print(" :::::::: ", end=" ")
-        # print(j.text)
-        pass
-
-
-   # print(name[0].text)
-    #print(desc[1].text)
-    #print(value[1].text)
 
     f.write(url + ", US, AL, " + '"' + name[0].text + '"' + ",") #name and constant variables
     print(name[0].text)
@@ -120,12 +88,13 @@ def parse():
 
     find_foreign_company(desc,value,name)
 
-
-
-    f.write(value[1].text + ",")
-    print(value[1].text)
+    f.write(value[1].text + ",") #official business type
 
     # get the core business type
+    if "Foreign" in value[1].text:
+        f.write("Foreign ")
+    elif "Foreign" not in value[1].text:
+        f.write("Domestic ")
     if "Limited" in value[1].text:
         f.write("LLC,")
     elif "Corporation" in value[1].text:
@@ -133,15 +102,8 @@ def parse():
     else:
         f.write("---,")
 
-    # if "Exit" in value[3].text:
-    #     f.write("Foreign,")
-    #     print('test')
-    #     totalScraped += 1
-    #     parse()
-
-
     f.write(value[4].text + ",") #status
-
+    #First major split in the structure of the elements. For example, companies that don't exist have an entry of when they stopped existing, companies that do exist, don't.
     if value[4].text == "Dissolved":
         dateFormatted = datetime.datetime.strptime(value[5].text.strip(), '%m-%d-%Y')
         f.write(dateFormatted.date().strftime("%m/%d/%Y") + ",") # dissolve date
@@ -152,12 +114,16 @@ def parse():
         f.write('"' + value[10].text.replace("\n", "").strip() + '",' + "\n")  # registerered mailing add.
         f.close()
         totalScraped += 1
+        totalCount += 1
+        print("Total: ", end=" ")
+        print(totalCount)
+        get_request_per_minute()
         #print(totalScraped) add a global counter
         parse()
 
     elif value[4].text == "Withdrawn":
         dateFormatted = datetime.datetime.strptime(value[5].text.strip(), '%m-%d-%Y')
-        f.write(dateFormatted.date().strftime("%m/%d/%Y") + ",")  # dissolve date
+        f.write(dateFormatted.date().strftime("%m/%d/%Y") + ",")  # withdraw date
         dateFormatted = datetime.datetime.strptime(value[8].text.replace(" ", ""), '%m-%d-%Y')
         f.write(dateFormatted.date().strftime("%m/%d/%Y") + ",")  # formation date
         f.write('"' + value[10].text.replace("\n", "").strip() + '",') #reg agent name
@@ -165,6 +131,10 @@ def parse():
         f.write('"' + value[12].text.replace("\n", "").strip() + '",\n') #reg mailing
         f.close()
         totalScraped += 1
+        totalCount += 1
+        print("Total: ", end=" ")
+        print(totalCount)
+        get_request_per_minute()
         parse()
     elif value[4].text == "Exists":
         f.write("---,")
@@ -174,6 +144,10 @@ def parse():
         f.write('"' + value[8].text.replace("\n", "").strip() + '",')
         f.write('"' + value[9].text.replace("\n", "").strip() + '",\n')
         f.close()
+        totalCount += 1
+        print("Total: ", end=" ")
+        print(totalCount)
+        get_request_per_minute()
         totalScraped += 1
         parse()
     elif value[4].text == "Merged" or "Consolidated":
@@ -186,32 +160,39 @@ def parse():
         f.write('"' + value[11].text.replace("\n", "").strip() + '",')
         f.close()
         totalScraped += 1
+        totalCount += 1
+        print("Total: ", end=" ")
+        print(totalCount)
+        get_request_per_minute()
         parse()
     elif value[4].text == "Cancelled":
         f.write('"MANUAL_REVIEW_REQUIRED')
         f.close()
         totalScraped += 1
+        totalCount += 1
+        print("Total: ", end=" ")
+        print(totalCount)
+        get_request_per_minute()
+        parse()
+    else:
+        f.write('"MANUAL_REVIEW_REQUIRED')
+        f.close()
+        totalScraped += 1
+        totalCount += 1
+        print("Total: ", end=" ")
+        print(totalCount)
+        get_request_per_minute()
         parse()
 
-
-
-    print(value[9].text)
-
-
-
-
-
-
+def get_request_per_minute():
     end = time.time() / 60
     time_elapsed = (end - start)
     request_per_minute = count / time_elapsed
     print("average request per minute", end=" ")
     print(round(request_per_minute, 2))
 
-    f.close()
-    parse()
+def kill_switch():
+    print("Done")
 
 
-global start
-start = time.time() / 60
 parse()

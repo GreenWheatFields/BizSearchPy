@@ -4,9 +4,13 @@ import json
 from stem import Signal
 from stem.control import Controller
 
+global count
+count = 0
 
-def get_tor_session(count):
-    global session
+def get_tor_session():
+    global session, count
+    count += 1
+
     session = requests.session()
     session.proxies = {'http': Keys.tor_proxy(),
                        'https': Keys.tor_proxy()}
@@ -18,8 +22,8 @@ def get_tor_session(count):
         print("Getting location")
         location_url = "https://ipapi.co/" + ip["origin"] + "/json/"
         location = json.loads(requests.get(location_url).text)
-        print(location_url)
-        print(location["country"])
+        print(location["country_name"])
+        count += 1
     return session
 
 
