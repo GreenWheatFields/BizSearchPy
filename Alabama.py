@@ -47,7 +47,7 @@ def parse():
     if totalCount >= 950000:
         kill_switch()
 
-    if totalScraped >= 65:
+    if totalScraped >= 70:
         SetProxy.renew_connection()
         totalScraped = 0
 
