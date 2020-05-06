@@ -54,7 +54,6 @@ def parse():
     url = baseURL + str(nextBiz).zfill(6)
     print(url)
     session = SetProxy.get_tor_session()
-
     r = session.get(url)
     #r = requests.get(url)
 
@@ -157,7 +156,7 @@ def parse():
         f.write(dateFormatted.date().strftime("%m/%d/%Y") + ",")  # formation date
         f.write('"' + value[9].text.replace("\n", "").strip() + '",')  # reg name, add., mail add.
         f.write('"' + value[10].text.replace("\n", "").strip() + '",')
-        f.write('"' + value[11].text.replace("\n", "").strip() + '",')
+        f.write('"' + value[11].text.replace("\n", "").strip() + '",\n')
         f.close()
         totalScraped += 1
         totalCount += 1
@@ -166,7 +165,7 @@ def parse():
         get_request_per_minute()
         parse()
     elif value[4].text == "Cancelled":
-        f.write('"MANUAL_REVIEW_REQUIRED')
+        f.write('"MANUAL_REVIEW_REQUIRED\n')
         f.close()
         totalScraped += 1
         totalCount += 1
@@ -175,7 +174,7 @@ def parse():
         get_request_per_minute()
         parse()
     else:
-        f.write('"MANUAL_REVIEW_REQUIRED')
+        f.write('"MANUAL_REVIEW_REQUIRED\n')
         f.close()
         totalScraped += 1
         totalCount += 1
