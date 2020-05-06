@@ -23,24 +23,46 @@ count = 0
 class Alabama:
     print(nextBiz)
 
-def find_foreign_company(desc, value):
+def find_foreign_company(desc, value, name):
     for i, j in zip(desc,value):
         if "Entity Type" in i.text.replace("\n", "").strip():
             if "Foreign" in j.text.replace("\n", "").strip():
                 f2 = open("Alabama.csv", "a")
-                f2.write("Manualreview,\n")
-
+                f2.write(url + ", US, AL, " + '"' + name[0].text + '"' + ",")
                 #totalScraped += 1 replcae with global count variable
                 print("foregin company")
-                f2.close()
-                parse()
+                for k  in desc:
+                    if "Origin" in k.text:
+                        f2.write(value[0].text.strip() + ',' + value[2].text.strip() + ',')
+                        if "Corporation" in k.text:
+                            f2.write("Corporation,")
+                        elif "Limited":
+                            f2.wrote("LLC,")
+                        f2.write(value[5].text + ",")
+                        #definetely going to have so seperate the parse method into multiple methods for my own sanity
+                        f2.close()
+                        parse()
+
+                # if "Origin" in i.text.replace("\n", "").strip():
+                #     f2.write(value[0].text + ",\n")
+                #     print("test")
+                #     parse()
+                # else:
+                #     print("test2")
+                #     parse()
+
+                #f2.close()
+                # perhaps find wheter or not an attribute name == "Name at place of oriigin" if so set x = 1. if x = 0 you know where to start, same with x e 1:
+                #parse()
+
+
 def parse():
     # will need to catch or identify indexError
 
     f = open("Alabama.csv", "a")
 
 
-    global nextBiz, totalScraped, count
+    global nextBiz, totalScraped, count,url
     nextBiz += 1
     totalScraped += 1
     count += 1
@@ -59,6 +81,7 @@ def parse():
     #r = requests.get(url)
 
     doc = BeautifulSoup(r.text, features="html.parser")
+
     #need to check if request have been limited before continuing
 
     status_check = 0
@@ -95,7 +118,7 @@ def parse():
     print(name[0].text)
     f.write(value[0].text + ',') #entity number
 
-    find_foreign_company(desc,value)
+    find_foreign_company(desc,value,name)
 
 
 
