@@ -11,13 +11,14 @@ import SetProxy
 
 dateTest = "06/02/01"
 
-nextBiz = 0
+nextBiz = 2198
 
 baseURL = "http://arc-sos.state.al.us/cgi/corpdetail.mbr/detail?page=number&num1="
 totalScraped = 0
 formatted = ""
 proxyCount = 0
 count = 0
+errorCount = 0
 global start
 start = time.time() / 60
 totalCount = 0
@@ -40,7 +41,7 @@ def parse():
 
     f = open("Alabama.csv", "a")
 
-    global nextBiz, totalScraped, count, start, totalCount
+    global nextBiz, totalScraped, count, start, totalCount, errorCount
     nextBiz += 1
     totalScraped += 1
     count += 1
@@ -54,6 +55,8 @@ def parse():
     url = baseURL + str(nextBiz).zfill(6)
     print(url)
     session = SetProxy.get_tor_session()
+
+
     r = session.get(url)
     #r = requests.get(url)
 
@@ -80,8 +83,8 @@ def parse():
     desc = doc.find_all("td", class_="aiSosDetailDesc")
     value = doc.find_all("td", class_="aiSosDetailValue")
     name = doc.find_all("td", class_="aiSosDetailHead")
-
     f.write(url + ", US, AL, " + '"' + name[0].text + '"' + ",") #name and constant variables
+
     print(name[0].text)
     f.write(value[0].text + ',') #entity number
 
@@ -104,10 +107,13 @@ def parse():
     f.write(value[4].text + ",") #status
     #First major split in the structure of the elements. For example, companies that don't exist have an entry of when they stopped existing, companies that do exist, don't.
     if value[4].text == "Dissolved":
-        dateFormatted = datetime.datetime.strptime(value[5].text.strip(), '%m-%d-%Y')
-        f.write(dateFormatted.date().strftime("%m/%d/%Y") + ",") # dissolve date
-        dateFormatted = datetime.datetime.strptime(value[7].text.replace(" ", ""), '%m-%d-%Y')
-        f.write(dateFormatted.date().strftime("%m/%d/%Y") + ",")  #formation date
+        try:
+            dateFormatted = datetime.datetime.strptime(value[5].text.strip(), '%m-%d-%Y')
+            f.write(dateFormatted.date().strftime("%m/%d/%Y") + ",") # dissolve date
+            dateFormatted = datetime.datetime.strptime(value[7].text.replace(" ", ""), '%m-%d-%Y')
+            f.write(dateFormatted.date().strftime("%m/%d/%Y") + ",")  #formation date
+        except ValueError:
+            f.write("---,---,")
         f.write('"' + value[8].text.replace("\n", "").strip() + '",') #registerered agent name
         f.write('"' + value[9].text.replace("\n", "").strip() + '",')  # registerered office add.
         f.write('"' + value[10].text.replace("\n", "").strip() + '",' + "\n")  # registerered mailing add.
@@ -121,10 +127,13 @@ def parse():
         parse()
 
     elif value[4].text == "Withdrawn":
-        dateFormatted = datetime.datetime.strptime(value[5].text.strip(), '%m-%d-%Y')
-        f.write(dateFormatted.date().strftime("%m/%d/%Y") + ",")  # withdraw date
-        dateFormatted = datetime.datetime.strptime(value[8].text.replace(" ", ""), '%m-%d-%Y')
-        f.write(dateFormatted.date().strftime("%m/%d/%Y") + ",")  # formation date
+        try:
+            dateFormatted = datetime.datetime.strptime(value[5].text.strip(), '%m-%d-%Y')
+            f.write(dateFormatted.date().strftime("%m/%d/%Y") + ",")  # withdraw date
+            dateFormatted = datetime.datetime.strptime(value[8].text.replace(" ", ""), '%m-%d-%Y')
+            f.write(dateFormatted.date().strftime("%m/%d/%Y") + ",")  # formation date
+        except ValueError:
+            f.write("---,---,")
         f.write('"' + value[10].text.replace("\n", "").strip() + '",') #reg agent name
         f.write('"' + value[11].text.replace("\n", "").strip() + '",') #reg address
         f.write('"' + value[12].text.replace("\n", "").strip() + '",\n') #reg mailing
@@ -137,8 +146,11 @@ def parse():
         parse()
     elif value[4].text == "Exists":
         f.write("---,")
-        dateFormatted = datetime.datetime.strptime(value[6].text.strip(), '%m-%d-%Y')
-        f.write(dateFormatted.date().strftime("%m/%d/%Y") + ",") #formation date
+        try:
+            dateFormatted = datetime.datetime.strptime(value[6].text.strip(), '%m-%d-%Y')
+            f.write(dateFormatted.date().strftime("%m/%d/%Y") + ",") #formation date
+        except ValueError:
+            f.write("---,")
         f.write('"' + value[7].text.replace("\n", "").strip() + '",')   # reg name, add., mail add.
         f.write('"' + value[8].text.replace("\n", "").strip() + '",')
         f.write('"' + value[9].text.replace("\n", "").strip() + '",\n')
@@ -150,10 +162,13 @@ def parse():
         totalScraped += 1
         parse()
     elif value[4].text == "Merged" or "Consolidated":
-        dateFormatted = datetime.datetime.strptime(value[5].text.strip(), '%m-%d-%Y')
-        f.write(dateFormatted.date().strftime("%m/%d/%Y") + ",")  # change date date
-        dateFormatted = datetime.datetime.strptime(value[8].text.replace(" ", ""), '%m-%d-%Y')
-        f.write(dateFormatted.date().strftime("%m/%d/%Y") + ",")  # formation date
+        try:
+            dateFormatted = datetime.datetime.strptime(value[5].text.strip(), '%m-%d-%Y')
+            f.write(dateFormatted.date().strftime("%m/%d/%Y") + ",")  # change date date
+            dateFormatted = datetime.datetime.strptime(value[8].text.replace(" ", ""), '%m-%d-%Y')
+            f.write(dateFormatted.date().strftime("%m/%d/%Y") + ",")  # formation date
+        except ValueError:
+            f.write("---,---,")
         f.write('"' + value[9].text.replace("\n", "").strip() + '",')  # reg name, add., mail add.
         f.write('"' + value[10].text.replace("\n", "").strip() + '",')
         f.write('"' + value[11].text.replace("\n", "").strip() + '",\n')
