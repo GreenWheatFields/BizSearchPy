@@ -11,7 +11,7 @@ import SetProxy
 
 dateTest = "06/02/01"
 
-nextBiz = 2198
+nextBiz = 2317
 
 baseURL = "http://arc-sos.state.al.us/cgi/corpdetail.mbr/detail?page=number&num1="
 totalScraped = 0
