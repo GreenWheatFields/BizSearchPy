@@ -1,17 +1,13 @@
 import random
 import time
-from builtins import print
 import requests
 import datetime
-
 
 from bs4 import BeautifulSoup
 
 import SetProxy
 
-dateTest = "06/02/01"
-
-nextBiz = 2317
+nextBiz = 3297
 
 baseURL = "http://arc-sos.state.al.us/cgi/corpdetail.mbr/detail?page=number&num1="
 totalScraped = 0
@@ -31,13 +27,12 @@ def find_foreign_company(desc, value, name):
             if "Foreign" in i.text and "Legal Name in Place of Origin" in j.text:
                 print("origin includeds")
                 value.pop(1)
-                #im not sure if one is consitently to location, it could be a bug in the future
+                # im not sure if one is consitently to location, it could be a bug in the future
                 return value
 
 
 def parse():
     # will need to catch or identify indexError
-
 
     f = open("Alabama.csv", "a")
 
@@ -56,13 +51,12 @@ def parse():
     print(url)
     session = SetProxy.get_tor_session()
 
-
     r = session.get(url)
-    #r = requests.get(url)
+    # r = requests.get(url)
 
     doc = BeautifulSoup(r.text, features="html.parser")
 
-    #need to check if request have been limited before continuing
+    # need to check if request have been limited before continuing
 
     status_check = 0
 
@@ -70,27 +64,27 @@ def parse():
         status_check += 1
 
     if status_check == 5:
-        #set net proxy, reset count
+        # set net proxy, reset count
         proxyCount = 0
         SetProxy.renew_connection()
         parse()
 
     if status_check == 406:
-        #blank page, skip and recurse
+        # blank page, skip and recurse
         nextBiz += 1
         parse()
     length = 0
     desc = doc.find_all("td", class_="aiSosDetailDesc")
     value = doc.find_all("td", class_="aiSosDetailValue")
     name = doc.find_all("td", class_="aiSosDetailHead")
-    f.write(url + ", US, AL, " + '"' + name[0].text + '"' + ",") #name and constant variables
+    f.write(url + ", US, AL, " + '"' + name[0].text + '"' + ",")  # name and constant variables
 
     print(name[0].text)
-    f.write(value[0].text + ',') #entity number
+    f.write(value[0].text + ',')  # entity number
 
-    find_foreign_company(desc,value,name)
+    find_foreign_company(desc, value, name)
 
-    f.write(value[1].text + ",") #official business type
+    f.write(value[1].text + ",")  # official business type
 
     # get the core business type
     if "Foreign" in value[1].text:
@@ -104,17 +98,17 @@ def parse():
     else:
         f.write("---,")
 
-    f.write(value[4].text + ",") #status
-    #First major split in the structure of the elements. For example, companies that don't exist have an entry of when they stopped existing, companies that do exist, don't.
+    f.write(value[4].text + ",")  # status
+    # First major split in the structure of the elements. For example, companies that don't exist have an entry of when they stopped existing, companies that do exist, don't.
     if value[4].text == "Dissolved":
         try:
             dateFormatted = datetime.datetime.strptime(value[5].text.strip(), '%m-%d-%Y')
-            f.write(dateFormatted.date().strftime("%m/%d/%Y") + ",") # dissolve date
+            f.write(dateFormatted.date().strftime("%m/%d/%Y") + ",")  # dissolve date
             dateFormatted = datetime.datetime.strptime(value[7].text.replace(" ", ""), '%m-%d-%Y')
-            f.write(dateFormatted.date().strftime("%m/%d/%Y") + ",")  #formation date
+            f.write(dateFormatted.date().strftime("%m/%d/%Y") + ",")  # formation date
         except ValueError:
             f.write("---,---,")
-        f.write('"' + value[8].text.replace("\n", "").strip() + '",') #registerered agent name
+        f.write('"' + value[8].text.replace("\n", "").strip() + '",')  # registerered agent name
         f.write('"' + value[9].text.replace("\n", "").strip() + '",')  # registerered office add.
         f.write('"' + value[10].text.replace("\n", "").strip() + '",' + "\n")  # registerered mailing add.
         f.close()
@@ -123,7 +117,7 @@ def parse():
         print("Total: ", end=" ")
         print(totalCount)
         get_request_per_minute()
-        #print(totalScraped) add a global counter
+        # print(totalScraped) add a global counter
         parse()
 
     elif value[4].text == "Withdrawn":
@@ -134,9 +128,9 @@ def parse():
             f.write(dateFormatted.date().strftime("%m/%d/%Y") + ",")  # formation date
         except ValueError:
             f.write("---,---,")
-        f.write('"' + value[10].text.replace("\n", "").strip() + '",') #reg agent name
-        f.write('"' + value[11].text.replace("\n", "").strip() + '",') #reg address
-        f.write('"' + value[12].text.replace("\n", "").strip() + '",\n') #reg mailing
+        f.write('"' + value[10].text.replace("\n", "").strip() + '",')  # reg agent name
+        f.write('"' + value[11].text.replace("\n", "").strip() + '",')  # reg address
+        f.write('"' + value[12].text.replace("\n", "").strip() + '",\n')  # reg mailing
         f.close()
         totalScraped += 1
         totalCount += 1
@@ -148,10 +142,10 @@ def parse():
         f.write("---,")
         try:
             dateFormatted = datetime.datetime.strptime(value[6].text.strip(), '%m-%d-%Y')
-            f.write(dateFormatted.date().strftime("%m/%d/%Y") + ",") #formation date
+            f.write(dateFormatted.date().strftime("%m/%d/%Y") + ",")  # formation date
         except ValueError:
             f.write("---,")
-        f.write('"' + value[7].text.replace("\n", "").strip() + '",')   # reg name, add., mail add.
+        f.write('"' + value[7].text.replace("\n", "").strip() + '",')  # reg name, add., mail add.
         f.write('"' + value[8].text.replace("\n", "").strip() + '",')
         f.write('"' + value[9].text.replace("\n", "").strip() + '",\n')
         f.close()
@@ -198,12 +192,14 @@ def parse():
         get_request_per_minute()
         parse()
 
+
 def get_request_per_minute():
     end = time.time() / 60
     time_elapsed = (end - start)
     request_per_minute = count / time_elapsed
     print("average request per minute", end=" ")
     print(round(request_per_minute, 2))
+
 
 def kill_switch():
     print("Done")
